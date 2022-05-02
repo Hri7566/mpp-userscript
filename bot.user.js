@@ -17,6 +17,8 @@
 // @resource     MATERIAL_CSS https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css
 // @resource     ICONS_CSS https://fonts.googleapis.com/icon?family=Material+Icons
 // @require      https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+// @require      https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js
 // ==/UserScript==
 
 /*
@@ -1402,10 +1404,9 @@ window.Bot = class {
 
         // add own mouse movement
         $(document).mousemove(evt => {
+            if (this.cursor.enabled) return;
             this.mx = ((evt.pageX / $(window).width()) * 100).toFixed(2);
             this.my = ((evt.pageY / $(window).height()) * 100).toFixed(2);
-
-            if (this.cursor.enabled) return;
             this.setCursor(this.mx, this.my);
         });
         
@@ -1416,6 +1417,31 @@ window.Bot = class {
                 y: this.cursor.y
             }]);
         }, 1000 / 20);
+
+        let ot = Date.now();
+        let t = Date.now();
+        let dt = t - ot;
+
+        this.cursorFunctionInterval = setInterval(() => {
+            t = Date.now();
+            dt = t - ot;
+            if (!this.cursor.enabled) return;
+
+            this.mx += this.mx * dt;
+            this.my += this.my * dt;
+
+            if (this.mx < 0 || this.mx > 100) {
+                this.cursor.vel.x *= -1;
+            }
+            
+            if (this.my < 0 || this.my > 100) {
+                this.my *= -1;
+            }
+
+            this.setCursor(this.mx, this.my);
+
+            ot = Date.now();
+        }, 1000 / 60);
     }
 
     static updateOwnCursor() {
@@ -1539,7 +1565,7 @@ let audioIN = { audio: true };
 
 
 // spinning donut lol
-// nvm i made it a circle instead
+// nvm i made it an icosahedron instead
 
 // ==UserScript==
 // @name         GridUI (unfinished)
@@ -1574,7 +1600,7 @@ const renderer = new THREE.WebGLRenderer({
 
 const loader = new THREE.GLTFLoader();
 // const geometry = new THREE.TorusGeometry(10, 3, 8, 50);
-const geometry = new THREE.SphereGeometry(10, 7, 7);
+const geometry = new THREE.IcosahedronGeometry(20, 0);
 const material = new THREE.MeshStandardMaterial({
     color: 0xff0000,
     emissive: 0xffffff,
@@ -1582,7 +1608,7 @@ const material = new THREE.MeshStandardMaterial({
     roughness: 0.5,
     metalness: 0.5
 });
-const torus = new THREE.Mesh(geometry, material);
+const mesh = new THREE.Mesh(geometry, material);
 const light = new THREE.PointLight(0xffffff);
 const amblight = new THREE.AmbientLight(0xffffff);
 
@@ -1619,11 +1645,12 @@ const start = () => {
 
     scene.add(light);
     scene.add(amblight);
-    scene.add(torus);
+    scene.add(mesh);
 
     const animate = () => {
-        torus.rotation.x += 0.01;
-        torus.rotation.y += 0.01;
+        // torus.rotation.x += 0.01;
+        mesh.rotation.y += 0.005;
+        mesh.rotation.z += 0.0025;
 
         renderer.render(scene, camera);
         requestAnimationFrame(animate);
@@ -2510,3 +2537,59 @@ gClient.on("n", msg => {
         }
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+// if the original server ever comes back, maybe some special stuff will come with it
+
+gClient.on('data', msg => {
+    console.log(msg);
+});
+
+
+
+
+
+// youtube parser
+// when this is on, the whole page crashes constantly because google is a terrible company
+
+// gClient.on('a', msg => {
+//     parseYoutube(msg);
+// });
+
+// gClient.on('c', msg => {
+//     for (let m of msg.c) {
+//         parseYoutube(m);
+//     }
+// });
+
+// let parseYoutube = (msg) => {
+//     let match = msg.a.match(/^https?:\/\/(?:www\.)?youtube\.com\/watch\?v=([^&]+)/);
+
+//     if (match) {
+//         let id = match[1];
+//         let url = `https://www.youtube.com/embed/${id}?autoplay=1&origin=${window.location.origin}`;
+//         let iframe = document.createElement("iframe");
+//         iframe.src = url;
+//         // iframe.style.border = "none";
+//         // iframe.style.pointerEvents = "none";
+
+//         let li = $(`<li class="youtube"></li>`);
+//         $(li).css({
+//             opacity: 1
+//         });
+//         $(li).append(iframe);
+//         if (!$(li).data("player")) {
+//             $(li).data("player", true);
+//             $(`#chat ul li[title='${msg.p._id}']:contains('${msg.a}')`).after(li);
+//         }
+//     }
+// }
