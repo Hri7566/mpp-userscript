@@ -595,7 +595,19 @@ class Bot {
                     }
                 });
             }
-            return out;
+            if (out.length > 512) {
+                for (let i = 0; i < out.length; i += 512) {
+                    let delay = 0;
+                    if (i < 4) {
+                        delay += 100;
+                    }
+                    setTimeout(() => {
+                        sendChat(out.substring(i, i + 512));
+                    }, (i * 1000) + delay);
+                }
+            } else {
+                return out;
+            }
         }, 0, false);
 
         // ai is broken
@@ -617,7 +629,10 @@ class Bot {
         this.addCommand("color", `&PREFIXcolor (color)`, 0, msg => {
             if (!msg.args[1]) return `Your color is ${new Color(msg.p.color).getName().replace("A", 'a')}. [${msg.p.color}]`;
             let user = getPart(msg.argcat);
-            if (!user) return `User '${msg.argcat}' not found.`;
+            if (!user) {
+                let color = new Color(msg.argcat);
+                return `User '${msg.argcat}' not found, but if '${msg.argcat}' is a color, it would be ${color.getName().replace("A", 'a')}. [${color.toHexa()}]`;
+            }
             return `${user.name}'s color is ${new Color(user.color).getName().replace("A", 'a')}. [${user.color}]`;
         }, 0, false);
 
@@ -894,6 +909,54 @@ class Bot {
         this.addCommand('tableunflip', `&PREFIXtableunflip`, 0, (msg, bot) => {
             return `┬─┬ ノ( ゜-゜ノ)`;
         }, 0, true);
+
+        this.addCommand('roll', `&PREFIXroll <number>`, 1, (msg, bot) => {
+            let num = parseInt(msg.argcat);
+            if (isNaN(num)) {
+                num = 6;
+            }
+            return `${msg.p.name} rolled a ${num}-sided die and it landed on ${Math.floor(Math.random() * num) + 1}.`;
+        }, 0, false);
+
+        this.addCommand('who', `&PREFIXwho <user>`, 1, (msg, bot) => {
+            let user = this.getUserFuzzy(msg.argcat);
+            if (!user) return `Could not find user.`;
+            return `ID: ${user._id} | Name: ${user.name} | Rank: ${user.rank.name} [${user.rank._id}]`;
+        }, 0, false);
+
+        this.addCommand('longestname', `&PREFIXlongestname`, 0, (msg, bot) => {
+            let tied = 0;
+            let longest = Object.values(this.userdata).reduce((a, b) => {
+                if (a.name.length == b.name.length) {
+                    tied++;
+                    return a;
+                }
+                return a.name.length > b.name.length ? a : b;
+            });
+            return `The longest name is "${longest.name}" with ${longest.name.length} characters. (Tied with ${tied} others)`;
+        }, 0, true);
+
+        this.addCommand('shortestname', `&PREFIXshortestname`, 0, (msg, bot) => {
+            let tied = 0;
+            let shortest = Object.values(this.userdata).reduce((a, b) => {
+                if (a.name == "") {
+                    return b;
+                }
+                if (b.name == "") {
+                    return a;
+                }
+                if (a.name.length == b.name.length) {
+                    tied++;
+                    return a;
+                }
+                return a.name.length < b.name.length ? a : b;
+            });
+            return `The shortest name is "${shortest.name}" with ${shortest.name.length} characters. (Tied with ${tied} others)`;
+        }, 0, true);
+
+        this.addCommand('usercount', `&PREFIXusercount`, 0, (msg, bot) => {
+            return `There are ${Object.keys(this.userdata).length} users in the database.`;
+        }, 0, false);
     }
 
     static addCommand(cmd, usage, minargs, func, minrank, hidden) {
@@ -917,6 +980,24 @@ class Bot {
         }
 
         this.saveUserData();
+
+        return foundUser;
+    }
+
+    static getUserFuzzy(nameOrID) {
+        let ids = Object.keys(this.userdata);
+        let foundUser;
+
+        ids.forEach(id => {
+            let u = this.userdata[id];
+            if (u.name.toLowerCase().includes(nameOrID) || u._id.toLowerCase().includes(nameOrID)) {
+                foundUser = u;
+            }
+        });
+
+        if (typeof(foundUser) == 'undefined') {
+            return null;
+        }
 
         return foundUser;
     }
