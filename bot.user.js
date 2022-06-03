@@ -787,7 +787,7 @@ class Bot {
             let user = getPart(msg.argcat);
             if (!user || typeof user == 'undefined') return `Could not find user.`;
             return `${msg.p.name} spanked ${user.name}.`;
-        }, 0 , false);
+        }, 0 , true);
         
         this.addCommand('hit', `&PREFIXhit [user]`, 0, (msg, bot) => {
             if (!msg.args[1]) {
@@ -796,7 +796,7 @@ class Bot {
             let user = getPart(msg.argcat);
             if (!user || typeof user == 'undefined') return `Could not find user.`;
             return `${msg.p.name} hit ${user.name}.`;
-        }, 0, false);
+        }, 0, true);
 
         this.addCommand('hug', `&PREFIXhug [user]`, 0, (msg, bot) => {
             let r = Math.random();
@@ -816,7 +816,7 @@ class Bot {
             } else {
                 return `${msg.p.name} slapped ${p.name}.`
             }
-        }, 0, false);
+        }, 0, true);
         
         this.addCommand('poke', `&PREFIXpoke [user]`, 0, (msg, bot) => {
             let r = Math.random();
@@ -841,20 +841,6 @@ class Bot {
             }
         }, 0, false);
 
-        this.addCommand('roomlove', `&PREFIXroomlove`, 0, (msg, bot) => {
-            return `Room love meter: ${this.roomLove}`;
-        }, 0, false);
-
-        this.addCommand('love', `&PREFIXlove [user]`, 0, (msg, bot) => {
-            if (this.roomLove < 1) return `There is no love in the room. ;(`;
-            if (this.roomLove < 5) return `There isn't enough love in the room to love others yet, so you have to find a way to spread it.`;
-            return `${msg.p.name} loves ${msg.argcat}.`;
-        }, 0, false);
-
-        function loveUpdate() {
-
-        }
-
         this.addCommand('repe', `&PREFIXrepe <message>`, 1, (msg, bot) => {
             let alpha = 'abceefrhijkpmnopqrstuvwxyz';
             let orig = 'abcdefghijklmnopqrstuvwxyz';
@@ -872,7 +858,7 @@ class Bot {
                 }
             }
             return output;
-        }, 0, false);
+        }, 0, true);
 
         this.addCommand('geld', `&PREFIXgeld <message>`, 1, (msg, bot) => {
             let alpha = 'abcdefghijklmnopqrstuvwxyz';
@@ -891,6 +877,14 @@ class Bot {
                 }
             }
             return output;
+        }, 0, true);
+
+        this.addCommand('shrug', `&PREFIXshrug`, 0, (msg, bot) => {
+            if (!msg.args[1]) {
+                return `${msg.p.name} shrugs. ¯\\_(ツ)_/¯`;
+            } else {
+                return `A shrug from ${msg.p.name}: ${msg.a} ¯\\_(ツ)_/¯`;
+            }
         }, 0, false);
     }
 
