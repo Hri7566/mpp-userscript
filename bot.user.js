@@ -21,6 +21,50 @@
 // @require      https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js
 // ==/UserScript==
 
+const oldLog = console.log;
+console.log = (...args) => {
+    oldLog(...args);
+    chat(args.map(arg => {
+        if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+        }
+        return arg;
+    }).join(" "));
+}
+
+const oldError = console.error;
+console.error = (...args) => {
+    oldError(...args);
+    chat("[ERROR] " + args.map(arg => {
+        if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+        }
+        return arg;
+    }).join(" "));
+}
+
+const oldWarn = console.warn;
+console.warn = (...args) => {
+    oldWarn(...args);
+    chat("[WARN] " + args.map(arg => {
+        if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+        }
+        return arg;
+    }).join(" "));
+}
+
+const oldDebug = console.debug;
+console.debug = (...args) => {
+    oldDebug(...args);
+    chat("[DEBUG] " + args.map(arg => {
+        if (typeof arg === 'object') {
+            return JSON.stringify(arg);
+        }
+        return arg;
+    }).join(" "));
+}
+
 /*
 const material = GM_getResourceText("MATERIAL_CSS");
 GM_addStyle(material);
@@ -389,7 +433,7 @@ window.closeModal = () => {
     gModal = null;
 }
 
-window.Bot = class {
+class Bot {
     static usedBot = JSON.parse(localStorage.getItem('hriUsed')) == true;
     static started = false;
     static enabled = true;
@@ -807,7 +851,11 @@ window.Bot = class {
             return `${msg.p.name} loves ${msg.argcat}.`;
         }, 0, false);
 
-        this.addCommand('repe', `&PREFIXrepe [message]`, 1, (msg, bot) => {
+        function loveUpdate() {
+
+        }
+
+        this.addCommand('repe', `&PREFIXrepe <message>`, 1, (msg, bot) => {
             let alpha = 'abceefrhijkpmnopqrstuvwxyz';
             let orig = 'abcdefghijklmnopqrstuvwxyz';
             let message = msg.argcat;
@@ -826,9 +874,24 @@ window.Bot = class {
             return output;
         }, 0, false);
 
-        function loveUpdate() {
-
-        }
+        this.addCommand('geld', `&PREFIXgeld <message>`, 1, (msg, bot) => {
+            let alpha = 'abcdefghijklmnopqrstuvwxyz';
+            let orig = 'abceefrhijkpmnopqrstuvwxyz';
+            let message = msg.argcat;
+            let output = '';
+            for (let i = 0; i < message.length; i++) {
+                // replace orig chars with alpha chars
+                if (message[i] == ' ') {
+                    output += ' ';
+                    continue;
+                }
+                let index = orig.indexOf(message[i]);
+                if (index != -1) {
+                    output += alpha[index];
+                }
+            }
+            return output;
+        }, 0, false);
     }
 
     static addCommand(cmd, usage, minargs, func, minrank, hidden) {
@@ -898,16 +961,17 @@ window.Bot = class {
         localStorage.setItem("hriCalls", JSON.stringify(this.calls));
     }
 
-    static changeCursorMode(str) {
-        
-    }
+    static added = false;
 
     static addHTML() {
+        if (this.added) return;
         this.addButtons();
-        this.addModal();
+        this.addModals();
+        this.added = true;
     }
 
     static addButtons() {
+        if (this.added) return;
         // $("#bottom .relative").append(`<div id="hri-bot-button" class="ugly-button translate">Bot Settings</div>`);
         // $("#hri-bot-button").css("position", "absolute").css("left", "780px").css("top", "4px");
 
@@ -1098,6 +1162,43 @@ window.Bot = class {
             }
         }
 
+        let hideCursorButton = `<div id="side-menu-options-hide-cursor" class="ugly-button side-menu-options-button">Hide Cursor</div>`;
+
+        $("#side-menu-options-body").append($(hideCursorButton));
+
+        let cursorHidden = false;
+
+        $("#side-menu-options-hide-cursor").on("click", () => {
+            if (!cursorHidden) {
+                $(gClient.getOwnParticipant().cursorDiv).fadeOut(250);
+                $("#side-menu-options-hide-cursor").html("Show Cursor");
+                cursorHidden = true;
+            } else {
+                $(gClient.getOwnParticipant().cursorDiv).fadeIn(250);
+                $("#side-menu-options-hide-cursor").html("Hide Cursor");
+                cursorHidden = false;
+            }
+            localStorage.hriPianoCursorHidden = cursorHidden;
+        });
+
+        if (typeof localStorage.hriPianoCursorHidden !== 'undefined') {
+            if (localStorage.hriPianoCursorHidden === "true") {
+                setTimeout(() => {
+                    $(gClient.getOwnParticipant().cursorDiv).fadeOut(250);
+                }, 1000);
+                $("#side-menu-options-hide-cursor").html("Show Cursor");
+                cursorHidden = true;
+            }
+        }
+
+        let dataBtn = `<div id="side-menu-options-bot-data" class="ugly-button side-menu-options-button">Bot Data</div>`;
+
+        $("#side-menu-options-body").append($(dataBtn));
+
+        $("#side-menu-options-bot-data").on("click", () => {
+            this.openData();
+        });
+
         let closeBtn = `<div id="side-menu-options-close" class="ugly-button side-menu-options-button">Close Menu</div>`;
 
         $("#side-menu-options-body").append($(closeBtn));
@@ -1123,7 +1224,8 @@ window.Bot = class {
         });
     }
 
-    static addModal() {
+    static addModals() {
+        if (this.added) return;
         $("#modals").append(`
             <div id="hri-bot-settings" class="dialog" style="display: none;">
                 <p><label><input type="checkbox" name="enabled" class="checkbox"${this.enabled ? " checked" : ""}>Bot Enabled</label></p>
@@ -1147,6 +1249,20 @@ window.Bot = class {
             this.updateTheme();
 			closeModal();
         });
+
+        $("#modals").append(`
+            <div id="hri-bot-data" class="dialog" style="display: none;">
+                <select name="ids" id="id-list">
+                </select>
+                <button class="submit">CLOSE</button>
+            </div>
+        `);
+
+        $("#hri-bot-data").css("height", "400px").css("margin-top", "-200px");
+
+        $("#hri-bot-data .submit").click(evt => {
+            closeModal();
+        });
     }
 
     static openSettings() {
@@ -1156,6 +1272,22 @@ window.Bot = class {
             $("#hri-bot-settings input[name=themecolor]").val(this.theme.color.toHexa());
             $("#hri-bot-settings input[name=disableblur]").prop("checked", this.theme.blurDisabled);
         }, 250);
+    }
+
+    static openData() {
+        openModal("#hri-bot-data");
+        $("#hri-bot-data select").html("");
+
+        for (let id of Object.keys(this.userdata)) {
+            $("#hri-bot-data select").append(`<option value="${id}">${id}</option>`);
+        }
+
+        $("#hri-bot-data select").change(evt => {
+            let id = $("#hri-bot-data select").val();
+            if (id === "") return;
+            let data = this.userdata[id];
+            $("#hri-bot-data textarea").val(JSON.stringify(data, null, 4));
+        });
     }
 
     static updateTheme() {
@@ -1233,6 +1365,7 @@ window.Bot = class {
         }
 
         function handleKeyDown(evt) {
+            if ($("#chat").hasClass("chatting")) return;
             var code = parseInt(evt.keyCode);
             // if (code == 220) { //Yoshify's speech to text
             if (code == 192) {
@@ -1404,10 +1537,12 @@ window.Bot = class {
 
         // add own mouse movement
         $(document).mousemove(evt => {
-            if (this.cursor.enabled) return;
-            this.mx = ((evt.pageX / $(window).width()) * 100).toFixed(2);
-            this.my = ((evt.pageY / $(window).height()) * 100).toFixed(2);
-            this.setCursor(this.mx, this.my);
+            // setTimeout(() => {
+                if (this.cursor.enabled) return;
+                this.mx = ((evt.pageX / $(window).width()) * 100).toFixed(2);
+                this.my = ((evt.pageY / $(window).height()) * 100).toFixed(2);
+                this.setCursor(this.mx, this.my);
+            // }, 1000);
         });
         
         this.cursorMessageInterval = setInterval(() => {
@@ -1461,7 +1596,11 @@ window.Bot = class {
     }
 }
 
-setTimeout(() => {Bot.start(client)}, 1000);
+setTimeout(() => {
+    Bot.start(client)
+    window.Bot = Bot;
+    MPP.Bot = Bot;
+}, 1000);
 
 let enabled = false;
 
@@ -1600,7 +1739,7 @@ const renderer = new THREE.WebGLRenderer({
 
 const loader = new THREE.GLTFLoader();
 // const geometry = new THREE.TorusGeometry(10, 3, 8, 50);
-const geometry = new THREE.IcosahedronGeometry(20, 0);
+const geometry = new THREE.IcosahedronGeometry(100, 0);
 const material = new THREE.MeshStandardMaterial({
     color: 0xff0000,
     emissive: 0xffffff,
@@ -1609,7 +1748,6 @@ const material = new THREE.MeshStandardMaterial({
     metalness: 0.5
 });
 const mesh = new THREE.Mesh(geometry, material);
-const light = new THREE.PointLight(0xffffff);
 const amblight = new THREE.AmbientLight(0xffffff);
 
 let animating = false;
@@ -1620,11 +1758,12 @@ window.addEventListener("resize", function() {
     // https://stackoverflow.com/questions/20290402/three-js-resizing-canvas
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
+    
     renderer.setSize( window.innerWidth, window.innerHeight );
 });
 
 const start = () => {
+
     if (animating) return;
     animating = true;
 
@@ -1635,24 +1774,27 @@ const start = () => {
     } else {
         $("#bg").fadeIn(5000);
     }
-
+    
     renderer.setPixelRatio(devicePixelRatio);
     renderer.setSize(innerWidth, innerHeight);
+    // renderer.setClearColor(0x000000, 1);
 
-    camera.position.setZ(30);
+    // camera.position.setZ(50);
 
-    light.position.set(-20, 20, 0);
-
-    scene.add(light);
     scene.add(amblight);
     scene.add(mesh);
 
     const animate = () => {
         // torus.rotation.x += 0.01;
-        mesh.rotation.y += 0.005;
-        mesh.rotation.z += 0.0025;
+        // mesh.rotation.y += 0.005;
+        // mesh.rotation.z += 0.0025;
+        mesh.rotation.y += 0.001;
+        mesh.rotation.z += 0.0005;
 
         renderer.render(scene, camera);
+        $("#bottom").css({
+            background: 'none'
+        });
         requestAnimationFrame(animate);
     }
 
@@ -1666,18 +1808,30 @@ setTimeout(() => {
 }, 2500);
 
 const updateColor = () => {
-    if ('color' in MPP.client.channel.settings) {
-        let c = parseInt(MPP.client.channel.settings.color.substring(1), 16);
-        if (c == 0 || typeof c == 'undefined') c = 0xffffff;
-        // material.color.setHex(c);
-        // light.color.setHex(c);
-        material.emissive.setHex(c);
-    }
+    let c = parseInt(MPP.client.channel.settings.color.substring(1), 16);
+    if (c == 0 || typeof c == 'undefined') c = 0xffffff;
+    // material.color.setHex(c);
+    // light.color.setHex(c);
+    material.emissive.setHex(c);
+
     if ('color2' in MPP.client.channel.settings) {
-        let c = parseInt(MPP.client.channel.settings.color2.substring(1), 16);
-        if (c == 0 || typeof c == 'undefined') c = 0xffffff;
-        // light.color.setHex(c);
-        material.color.setHex(c);
+        let c2 = parseInt(MPP.client.channel.settings.color2.substring(1), 16);
+        if (c2 == 0 || typeof c2 == 'undefined') c2 = 0xffffff;
+        // light.color.setHex(c2);
+        material.color.setHex(c2);
+
+        // renderer.setClearColor(c2, 1);
+    } else {
+        // subtract 64 from each RGB but without integer underflow
+        let r = c >> 16;
+        let g = c >> 8 & 0xFF;
+        let b = c & 0xFF;
+
+        r = r - 64 > 0 ? r - 64 : 0;
+        g = g - 64 > 0 ? g - 64 : 0;
+        b = b - 64 > 0 ? b - 64 : 0;
+
+        // renderer.setClearColor(r << 16 | g << 8 | b, 1);
     }
 }
 
@@ -1798,8 +1952,31 @@ let gSustainedNotes = {};
 
 function handleKeyDown(evt) {
     let code = parseInt(evt.keyCode);
+    if(gPiano.key_binding[code] !== undefined) {
+        var binding = gPiano.key_binding[code];
+        if(!binding.held) {
+            binding.held = true;
 
-    if (code == 8) {
+            var note = binding.note;
+            var octave = 1 + note.octave + transpose_octave;
+            if(evt.shiftKey) ++octave;
+            else if(capsLockKey || evt.ctrlKey) --octave;
+            note = note.note + octave;
+            var vol = velocityFromMouseY();
+            press(note, vol);
+        }
+
+        if(++gKeyboardSeq == 3) {
+            gKnowsYouCanUseKeyboard = true;
+            if(window.gKnowsYouCanUseKeyboardTimeout) clearTimeout(gKnowsYouCanUseKeyboardTimeout);
+            if(localStorage) localStorage.knowsYouCanUseKeyboard = true;
+            if(window.gKnowsYouCanUseKeyboardNotification) gKnowsYouCanUseKeyboardNotification.close();
+        }
+
+        evt.preventDefault();
+        evt.stopPropagation();
+        return false;
+    } else if (code == 8) {
         gAutoSustain = !gAutoSustain;
         evt.preventDefault();
     } else if (code === 0x20) {
@@ -1807,6 +1984,24 @@ function handleKeyDown(evt) {
         evt.preventDefault();
     }
 }
+
+function captureKeyboard() {
+    // $("#piano").off("mousedown", recapListener);
+    // $("#piano").off("touchstart", recapListener);
+    $(document).on("keydown", handleKeyDown );
+    // $(document).on("keyup", handleKeyUp);
+    // $(window).on("keypress", handleKeyPress );
+};
+
+function releaseKeyboard() {
+    $(document).off("keydown", handleKeyDown );
+    // $(document).off("keyup", handleKeyUp);
+    // $(window).off("keypress", handleKeyPress );
+    // $("#piano").on("mousedown", recapListener);
+    // $("#piano").on("touchstart", recapListener);
+};
+
+// captureKeyboard();
 
 const DEFAULT_VELOCITY = 0.5;
 const TIMING_TARGET = 1000;
@@ -2474,8 +2669,8 @@ class Piano {
         if (!this.keys.hasOwnProperty(note) || !participant)
             return;
         var key = this.keys[note];
-        if (key.loaded)
-            this.audio.play(key.note, vol, delay_ms, participant.id);
+        // if (key.loaded)
+        //     this.audio.play(key.note, vol, delay_ms, participant.id);
         var self = this;
         setTimeout(function() {
             self.renderer.visualize(key, participant.color);
@@ -2492,13 +2687,75 @@ class Piano {
         if (!this.keys.hasOwnProperty(note))
             return;
         var key = this.keys[note];
-        if (key.loaded)
-            this.audio.stop(key.note, delay_ms, participant.id);
+        // if (key.loaded)
+        //     this.audio.stop(key.note, delay_ms, participant.id);
     }
 }
 
 globalThis.gPiano = new Piano(document.getElementById("piano"));
 MPP.piano = gPiano;
+
+var Note = function(note, octave) {
+    this.note = note;
+    this.octave = octave || 0;
+};
+
+
+
+var n = function(a, b) { return {note: new Note(a, b), held: false}; };
+
+var transpose_octave = 0;
+var capsLockKey = false;
+
+var velocityFromMouseY = function() {
+    return 0.1 + (MPP.Bot.my / 100) * 0.6;
+};
+
+var gKeyboardSeq = 0;
+
+
+gPiano.key_binding = {
+    65: n("gs"),
+    90: n("a"),
+    83: n("as"),
+    88: n("b"),
+    67: n("c", 1),
+    70: n("cs", 1),
+    86: n("d", 1),
+    71: n("ds", 1),
+    66: n("e", 1),
+    78: n("f", 1),
+    74: n("fs", 1),
+    77: n("g", 1),
+    75: n("gs", 1),
+    188: n("a", 1),
+    76: n("as", 1),
+    190: n("b", 1),
+    191: n("c", 2),
+    222: n("cs", 2),
+
+    49: n("gs", 1),
+    81: n("a", 1),
+    50: n("as", 1),
+    87: n("b", 1),
+    69: n("c", 2),
+    52: n("cs", 2),
+    82: n("d", 2),
+    53: n("ds", 2),
+    84: n("e", 2),
+    89: n("f", 2),
+    55: n("fs", 2),
+    85: n("g", 2),
+    56: n("gs", 2),
+    73: n("a", 2),
+    57: n("as", 2),
+    79: n("b", 2),
+    80: n("c", 3),
+    189: n("cs", 3),
+    219: n("d", 3),
+    187: n("ds", 3),
+    221: n("e", 3)
+};
 
 globalThis.gSoundSelector = new SoundSelector(gPiano);
 
@@ -2593,3 +2850,149 @@ gClient.on('data', msg => {
 //         }
 //     }
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * EarthBound Battle Backgrounds (https://github.com/gjtorikian/Earthbound-Battle-Backgrounds-JS)
+ */
+
+// ROM graphics
+
+class ROMGraphics {
+    constructor(bitsPerPixel) {
+        this.bitsPerPixel = bitsPerPixel
+    }
+    /* Internal function - builds the tile array from the graphics buffer. */
+    buildTiles() {
+        const n = this.gfxROMGraphics.length / (8 * this.bitsPerPixel)
+        this.tiles = []
+        for (let i = 0; i < n; ++i) {
+            this.tiles.push(new Array(8))
+            const o = i * 8 * this.bitsPerPixel
+            for (let x = 0; x < 8; ++x) {
+                this.tiles[i][x] = new Array(8)
+                for (let y = 0; y < 8; ++y) {
+                    let c = 0
+                    for (let bp = 0; bp < this.bitsPerPixel; ++bp) {
+                        // NOTE: Such a slight bug! We must Math.floor this value, due to the possibility of a number like 0.5 (which should equal 0).
+                        const halfBp = Math.floor(bp / 2)
+                        const gfx = this.gfxROMGraphics[o + y * 2 + (halfBp * 16 + (bp & 1))]
+                        c += ((gfx & (1 << 7 - x)) >> 7 - x) << bp
+                    }
+                    this.tiles[i][x][y] = c
+                }
+            }
+        }
+    }
+    /* JNI C code */
+    draw(bmp, palette, arrayROMGraphics) {
+        const data = bmp
+        let block = 0
+        let tile = 0
+        let subPalette = 0
+        let n = 0
+        let b1 = 0
+        let b2 = 0
+        let verticalFlip = false
+        let horizontalFlip = false
+        /* TODO: Hardcoding is bad; how do I get the stride normally? */
+        const stride = 1024
+        /* For each pixel in the 256×256 grid, we need to render the image found in the dump */
+        for (let i = 0; i < 32; ++i) {
+            for (let j = 0; j < 32; ++j) {
+                n = j * 32 + i
+                b1 = arrayROMGraphics[n * 2]
+                b2 = arrayROMGraphics[n * 2 + 1] << 8
+                block = b1 + b2
+                tile = block & 0x3FF
+                verticalFlip = (block & 0x8000) !== 0
+                horizontalFlip = (block & 0x4000) !== 0
+                subPalette = (block >> 10) & 7
+                this.drawTile(data, stride, i * 8, j * 8, palette, tile, subPalette, verticalFlip, horizontalFlip)
+            }
+        }
+        return data
+    }
+    drawTile(pixels, stride, x, y, palette, tile, subPalette, verticalFlip, horizontalFlip) {
+        const subPaletteArray = palette.getColors(subPalette)
+        let i, j, px, py, pos, rgbArray
+        for (i = 0; i < 8; ++i) {
+            if (horizontalFlip) {
+                px = x + 7 - i
+            } else {
+                px = x + i
+            }
+            for (j = 0; j < 8; ++j) {
+                rgbArray = subPaletteArray[this.tiles[tile][i][j]]
+                if (verticalFlip) {
+                    py = y + 7 - j
+                } else {
+                    py = y + j
+                }
+                pos = 4 * px + stride * py
+                pixels[pos + 0] = (rgbArray >> 16) & 0xFF
+                pixels[pos + 1] = (rgbArray >> 8) & 0xFF
+                pixels[pos + 2] = (rgbArray) & 0xFF
+            }
+        }
+        return pixels
+    }
+    /**
+     * Internal function - reads graphics from the specified block and builds
+     * tileset.
+     *
+     * @param block
+     * The block to read graphics data from
+     */
+    loadGraphics(block) {
+        this.gfxROMGraphics = block.decompress()
+        this.buildTiles()
+    }
+}
+
+
