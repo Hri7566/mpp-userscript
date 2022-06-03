@@ -886,6 +886,14 @@ class Bot {
                 return `A shrug from ${msg.p.name}: ${msg.a} ¯\\_(ツ)_/¯`;
             }
         }, 0, false);
+
+        this.addCommand('tableflip', `&PREFIXtableflip`, 0, (msg, bot) => {
+            return `(╯°□°）╯︵ ┻━┻`;
+        }, 0, true);
+
+        this.addCommand('tableunflip', `&PREFIXtableunflip`, 0, (msg, bot) => {
+            return `┬─┬ ノ( ゜-゜ノ)`;
+        }, 0, true);
     }
 
     static addCommand(cmd, usage, minargs, func, minrank, hidden) {
