@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Selfbot (.help)
+// @name         Hri7566's Selfbot
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1.5
 // @description  try to take over the world!
 // @author       Hri7566
 // @match        https://*.multiplayerpiano.com/*
