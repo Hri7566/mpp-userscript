@@ -1252,9 +1252,13 @@ class Bot {
 
         $("#modals").append(`
             <div id="hri-bot-data" class="dialog" style="display: none;">
-                <select name="ids" id="id-list">
-                </select>
+                <p class="total-users">Total users:</p>
+                <select name="ids" id="id-list"></select>
                 <button class="submit">CLOSE</button>
+                <p class="data-name">Name:</p>
+                <p class="data-id">ID:</p>
+                <p class="data-color">Color:</p>
+                <p class="data-rank">Rank:</p>
             </div>
         `);
 
@@ -1278,15 +1282,23 @@ class Bot {
         openModal("#hri-bot-data");
         $("#hri-bot-data select").html("");
 
+        let count = 0;
+
         for (let id of Object.keys(this.userdata)) {
+            count++;
             $("#hri-bot-data select").append(`<option value="${id}">${id}</option>`);
         }
+
+        $("#hri-bot-data .total-users").html("Total users: " + count);
 
         $("#hri-bot-data select").change(evt => {
             let id = $("#hri-bot-data select").val();
             if (id === "") return;
             let data = this.userdata[id];
-            $("#hri-bot-data textarea").val(JSON.stringify(data, null, 4));
+            $("#hri-bot-data .data-name").html("Name: " + data.name);
+            $("#hri-bot-data .data-id").html("ID: " + id);
+            $("#hri-bot-data .data-color").html("Color: " + new Color(data.color).toHexa());
+            $("#hri-bot-data .data-rank").html("Rank: " + data.rank.name);
         });
     }
 
@@ -1504,12 +1516,31 @@ class Bot {
         div.textContent = part.name || "";
         part.cursorDiv.appendChild(div);
 
+        client.on("participant added", p => {
+            // replace image
+            $(p.cursorDiv).css({
+                "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+            });
+        });
+
+        for (let p of Object.values(gClient.ppl)) {
+            // replace image
+            $(p.cursorDiv).css({
+                "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+            });
+        }
+
         client.on("ch", () => {
             // remove old cursors
             for (let p of Object.values(MPP.client.ppl)) {
                 if (p.cursorDiv && p._id == MPP.client.getOwnParticipant()._id) {
                     $(p.cursorDiv).remove();
                 }
+
+                // replace image
+                $(p.cursorDiv).css({
+                    "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                });
             }
 
             $("#cursors .cursor .name").each((i, n) => {
@@ -1524,6 +1555,10 @@ class Bot {
             div.style.display = "none";
             part.cursorDiv = $("#cursors")[0].appendChild(div);
             $(part.cursorDiv).fadeIn(2000);
+
+            $(part.cursorDiv).css({
+                "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+            });
 
             div = document.createElement("div");
             div.className = "name";
@@ -2866,6 +2901,17 @@ gClient.on('data', msg => {
 
 
 
+
+
+
+
+
+// replace volume slider with original one
+
+$("#volume #volume-slider").css({
+    background: "url(/volume2.png) no-repeat",
+    "background-position": "50% 50%"
+});
 
 
 
