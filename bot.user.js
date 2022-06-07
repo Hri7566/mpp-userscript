@@ -139,6 +139,7 @@ function getRooms() {
     });
 }
 
+
 function getPart(str) {
     let part;
     Object.keys(client.ppl).forEach(_id => {
@@ -150,6 +151,25 @@ function getPart(str) {
 
     return part;
 }
+
+function chset(set) {
+    client.sendArray([{
+        m: 'chset',
+        set: set
+    }]);
+}
+
+function setRoomColor(color, color2) {
+    chset({
+        color,
+        color2
+    });
+}
+
+MPP.getRooms = getRooms;
+MPP.getPart = getPart;
+MPP.chset = chset;
+MPP.setRoomColor = setRoomColor;
 
 var QuoteArray = [];
 
