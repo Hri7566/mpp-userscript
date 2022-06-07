@@ -1,0 +1,20 @@
+{
+  "name": "mpp-userscript",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Hri7566/mpp-userscript.git",
+  "author": "Hri7566 <hri7566@gmail.com>",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "webpack-dev-server --open",
+    "watch": "webpack --watch",
+    "dev": "electron-webpack dev"
+  },
+  "devDependencies": {
+    "electron": "^19.0.3",
+    "electron-webpack": "^2.8.2",
+    "webpack": "^5.73.0"
+  }
+}
