@@ -1683,13 +1683,13 @@ class Bot {
             // }, 1000);
         });
         
-        this.cursorMessageInterval = setInterval(() => {
-            client.sendArray([{
-                m: 'm',
-                x: this.cursor.x,
-                y: this.cursor.y
-            }]);
-        }, 1000 / 20);
+        // this.cursorMessageInterval = setInterval(() => {
+        //     client.sendArray([{
+        //         m: 'm',
+        //         x: this.cursor.x,
+        //         y: this.cursor.y
+        //     }]);
+        // }, 1000 / 20);
 
         let ot = Date.now();
         let t = Date.now();
