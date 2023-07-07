@@ -17,9 +17,15 @@
 // @resource     MATERIAL_CSS https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css
 // @resource     ICONS_CSS https://fonts.googleapis.com/icon?family=Material+Icons
 // @require      https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js
-// @require      https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
-// @require      https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js
+//
+// // deprecated
+// // @require      https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+// // @require      https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js
 // ==/UserScript==
+
+if (typeof window['Notification'] !== 'undefined') {
+    MPP.Notification = Notification;
+}
 
 const oldLog = console.log;
 console.log = (...args) => {
@@ -414,13 +420,23 @@ window.setChannelSettings = set => {
 }
 
 window.msgBox = (title, text, html, target) => {
-    new MPP.Notification({
+    // new MPP.Notification({
+    //     id: "hri-bot-msg",
+    //     title: title,
+    //     text: text,
+    //     target: target || "#piano",
+    //     duration: 7000,
+    //     html: html,
+    //     class: "classic"
+    // });
+    MPP.client.emit("notification", {
         id: "hri-bot-msg",
         title: title,
         text: text,
         target: target || "#piano",
         duration: 7000,
-        html: html
+        html: html,
+        class: "classic"
     });
 }
 
@@ -577,7 +593,10 @@ class Bot {
                     }
 
                     if (msg.rank._id < cmd.minrank) {
-                        sendChat(`You do not have permission to use '${msg.cmd}'.`);
+                        let out = `You do not have permission to use '${msg.cmd}'.`
+                        if (msg.cmd == 'js') {
+                            out += ` You thought you could get away with it, didn't you?`;
+                        }
                         return;
                     }
 
@@ -815,18 +834,18 @@ class Bot {
             }
         }, 0, false);
 
-        this.addCommand('spank', `&PREFIXspank [user]`, 0, (msg, bot) => {
-            if (!msg.args[1]) {
-                return `${msg.p.name} spanked themselves.`;
-            }
-            let user = getPart(msg.argcat);
-            if (!user || typeof user == 'undefined') return `Could not find user.`;
-            return `${msg.p.name} spanked ${user.name}.`;
-        }, 0 , true);
-        
+        // this.addCommand('spank', `&PREFIXspank [user]`, 0, (msg, bot) => {
+        //     if (!msg.args[1]) {
+        //         return `${msg.p.name} spanked themselves.`;
+        //     }
+        //     let user = getPart(msg.argcat);
+        //     if (!user || typeof user == 'undefined') return `Could not find user.`;
+        //     return `${msg.p.name} spanked ${user.name}.`;
+        // }, 0 , true);
+
         this.addCommand('hit', `&PREFIXhit [user]`, 0, (msg, bot) => {
             if (!msg.args[1]) {
-                return `${msg.p.name} slapped themselves, giving themselves a red mark.`;
+                return `${msg.p.name} punched themselves, bruising their face.`;
             }
             let user = getPart(msg.argcat);
             if (!user || typeof user == 'undefined') return `Could not find user.`;
@@ -852,7 +871,7 @@ class Bot {
                 return `${msg.p.name} slapped ${p.name}.`
             }
         }, 0, true);
-        
+
         this.addCommand('poke', `&PREFIXpoke [user]`, 0, (msg, bot) => {
             let r = Math.random();
             let p = getPart(msg.argcat);
@@ -1141,8 +1160,8 @@ class Bot {
                     "midi-btn",
                     "synth-btn",
                     "play-alone-btn",
-                    
-                    "client-settings-btn" // causes an issue when in the side menu
+
+                    // "client-settings-btn" // causes an issue when in the side menu
                 ];
                 if (!regularButtons.includes(el.id)) {
                     $(el).detach();
@@ -1198,7 +1217,7 @@ class Bot {
         $("#side-menu #side-menu-options #side-menu-options-body").append($(muteButton));
 
         $("#side-menu-options-mute-btn").on("click", toggleMute);
-        
+
         let muted = false;
         function toggleMute() {
             if (muted) {
@@ -1479,6 +1498,10 @@ class Bot {
             }
         }
 
+        Voice.onerror = (error) => {
+          // console.error(error);
+        }
+
         function handleKeyDown(evt) {
             if ($("#chat").hasClass("chatting")) return;
             var code = parseInt(evt.keyCode);
@@ -1548,16 +1571,17 @@ class Bot {
             if (argcat.includes("color")) {
                 if (MPP.client.getOwnParticipant().color !== "#08E8DE") {
                     MPP.client.sendArray([{
-                        m: 'userset', 
+                        m: 'userset',
                         set: {
-                            color:"#08E8DE"
+                            // color: "#08E8DE"
+                            color: "#8d3f50"
                         }
                     }]);
                 }
             }
             if (argcat.includes("name")) {
                 if (MPP.client.getOwnParticipant().name !== "๖ۣۜH͜r̬i͡7566") {
-                    MPP.client.sendArray([{m:'userset', set:{name: "๖ۣۜH͜r̬i͡7566"}}]);
+                    MPP.client.sendArray([{m:'userset', set: { name: "๖ۣۜH͜r̬i͡7566" }}]);
                 }
             }
             if (argcat.includes("keyword")) {
@@ -1622,14 +1646,24 @@ class Bot {
         client.on("participant added", p => {
             // replace image
             $(p.cursorDiv).css({
-                "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                // "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                "filter": "invert(1)"
+            });
+
+            $(p.cursorDiv).find(".name").css({
+                "filter": "invert(1)"
             });
         });
 
         for (let p of Object.values(gClient.ppl)) {
             // replace image
             $(p.cursorDiv).css({
-                "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                // "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                "filter": "invert(1)"
+            });
+
+            $(p.cursorDiv).find(".name").css({
+                "filter": "invert(1)"
             });
         }
 
@@ -1642,7 +1676,12 @@ class Bot {
 
                 // replace image
                 $(p.cursorDiv).css({
-                    "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                    // "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                    "filter": "invert(1)"
+                });
+
+                $(p.cursorDiv).find(".name").css({
+                    "filter": "invert(1)"
                 });
             }
 
@@ -1659,8 +1698,14 @@ class Bot {
             part.cursorDiv = $("#cursors")[0].appendChild(div);
             $(part.cursorDiv).fadeIn(2000);
 
-            $(part.cursorDiv).css({
-                "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+            // replace image
+            $(p.cursorDiv).css({
+                // "background-image": "url(https://www.pianorhythm.me/images/icons/cursors/x1/default.png)"
+                "filter": "invert(1)"
+            });
+
+            $(p.cursorDiv).find(".name").css({
+                "filter": "invert(1)"
             });
 
             div = document.createElement("div");
@@ -1671,25 +1716,25 @@ class Bot {
         });
 
         // remove old mouse movement
-        $(document).unbind("mousemove");
+        // $(document).unbind("mousemove");
 
-        // add own mouse movement
-        $(document).mousemove(evt => {
-            // setTimeout(() => {
-                if (this.cursor.enabled) return;
-                this.mx = ((evt.pageX / $(window).width()) * 100).toFixed(2);
-                this.my = ((evt.pageY / $(window).height()) * 100).toFixed(2);
-                this.setCursor(this.mx, this.my);
-            // }, 1000);
-        });
-        
-        // this.cursorMessageInterval = setInterval(() => {
-        //     client.sendArray([{
-        //         m: 'm',
-        //         x: this.cursor.x,
-        //         y: this.cursor.y
-        //     }]);
-        // }, 1000 / 20);
+//         // add own mouse movement
+//         $(document).mousemove(evt => {
+//             // setTimeout(() => {
+//                 if (this.cursor.enabled) return;
+//                 this.mx = ((evt.pageX / $(window).width()) * 100).toFixed(2);
+//                 this.my = ((evt.pageY / $(window).height()) * 100).toFixed(2);
+//                 this.setCursor(this.mx, this.my);
+//             // }, 1000);
+//         });
+
+//         this.cursorMessageInterval = setInterval(() => {
+//             client.sendArray([{
+//                 m: 'm',
+//                 x: this.cursor.x,
+//                 y: this.cursor.y
+//             }]);
+//         }, 1000 / 20);
 
         let ot = Date.now();
         let t = Date.now();
@@ -1706,7 +1751,7 @@ class Bot {
             if (this.mx < 0 || this.mx > 100) {
                 this.cursor.vel.x *= -1;
             }
-            
+
             if (this.my < 0 || this.my > 100) {
                 this.my *= -1;
             }
@@ -1714,7 +1759,7 @@ class Bot {
             this.setCursor(this.mx, this.my);
 
             ot = Date.now();
-        }, 1000 / 60);
+        }, 1000 / 25);
     }
 
     static updateOwnCursor() {
@@ -1730,7 +1775,7 @@ class Bot {
     }
 
     static [Symbol.toPrimitive](hint) {
-        return `whatever you're trying has to be bad, i prefer ${new Color(window.client.getOwnParticipant().color).getName().toString()} instead`;
+        return `whatever you're trying has to be bad, i prefer ${new Color(window.client.getOwnParticipant().color).getName().toString().replace('A', 'a')} instead`;
     }
 }
 
@@ -1755,6 +1800,7 @@ let enabled = false;
 
 let mute = true;
 MPP.client.sendArray([{ m: "+custom" }]);
+MPP.client.customSubscribed = true;
 
 // window.msgBox = (title, text, html) => {
 //     new MPP.Notification({
@@ -1776,7 +1822,7 @@ let audioIN = { audio: true };
       .then(function(mediaStreamObj) {
 
         document.addEventListener("keypress", evt => {
-            if (evt.key == "\\") {
+            if (evt.key == "\\" && !$("#chat").hasClass("chatting")) {
                 if (mute == true) {
                     msgBox("Voice Chat", "Voice chat is now enabled.");
                     a = setInterval(() => {
@@ -1786,7 +1832,7 @@ let audioIN = { audio: true };
                             var reader = new FileReader();
                             reader.readAsDataURL(ev.data);
                             reader.onloadend = function() {
-                                var base64data = reader.result;                
+                                var base64data = reader.result;
                                 MPP.client.sendArray([{ m: "custom", data: { m: "vc", "vcData": base64data.toString() }, target: { mode: "subscribed", global: false } }]);
                             }
                             // if (mediaRecorder.state == "recording") mediaRecorder.stop();
@@ -1817,21 +1863,21 @@ let audioIN = { audio: true };
         setTimeout(() => {
             MPP.client.sendArray([{m: "+custom"}]);
         }, 3000);
-    
+
         MPP.client.on("custom", cu => {
             if (cu.p == MPP.client.getOwnParticipant()._id) return;
-    
+
             // play audio from msg
             if (!('m' in cu)) {
                 return;
             }
-    
+
             let msg = cu.data;
-    
+
             if (msg.m == "vc") {
                 // convert msg.vcData from string to blob
                 let audio = new Audio(msg.vcData);
-                
+
                 // play audio when loaded
                 audio.addEventListener('loadeddata', () => {
                     audio.play();
@@ -1866,7 +1912,7 @@ $("#bg").css({
     top: 0,
     left: 0
 });
-
+/*
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
 
@@ -1877,7 +1923,7 @@ const renderer = new THREE.WebGLRenderer({
 
 const loader = new THREE.GLTFLoader();
 // const geometry = new THREE.TorusGeometry(10, 3, 8, 50);
-const geometry = new THREE.IcosahedronGeometry(100, 0);
+const geometry = new THREE.IcosahedronGeometry(1000, 0);
 const material = new THREE.MeshStandardMaterial({
     color: 0xff0000,
     emissive: 0xffffff,
@@ -1896,7 +1942,7 @@ window.addEventListener("resize", function() {
     // https://stackoverflow.com/questions/20290402/three-js-resizing-canvas
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    
+
     renderer.setSize( window.innerWidth, window.innerHeight );
 });
 
@@ -1912,7 +1958,7 @@ const start = () => {
     } else {
         $("#bg").fadeIn(5000);
     }
-    
+
     renderer.setPixelRatio(devicePixelRatio);
     renderer.setSize(innerWidth, innerHeight);
     // renderer.setClearColor(0x000000, 1);
@@ -2001,7 +2047,7 @@ const setupButton = btn => {
     $(btn).append(text);
     $(btn).append(canv);
 }
-
+*/
 
 
 
@@ -2204,7 +2250,7 @@ class Renderer {
         if (typeof height == 'undefined') {
             height = $(this.piano.rootElement).height();
         }
-        
+
         $(this.piano.rootElement).css({
             height: `${height}px`,
             marginTop: `${Math.floor($(window).height() / 2 - height / 2)}px`
@@ -2285,7 +2331,7 @@ class CanvasRenderer extends Renderer {
 
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        
+
         this.canvas.style.width = this.width / window.devicePixelRatio + 'px';
         this.canvas.style.height = this.height / window.devicePixelRatio + 'px';
 
@@ -2306,7 +2352,7 @@ class CanvasRenderer extends Renderer {
 
         this.blackBlipWidth = Math.floor(this.blackKeyWidth * 0.7);
         this.blackBlipHeight = Math.floor(this.blackBlipWidth * 0.8);
-        
+
         this.blackBlipX = Math.floor((this.blackKeyWidth - this.blackBlipWidth) / 2);
         this.blackBlipY = Math.floor(this.blackKeyHeight - this.blackBlipHeight * 1.2 - (0.05 * this.blackKeyHeight));
 
@@ -2369,11 +2415,11 @@ class CanvasRenderer extends Renderer {
 
         this.shadowRender = [];
         let y = -this.canvas.height * 2;
-        
+
         for (let j = 0; j < 2; j++) {
             let canvas = document.createElement('canvas');
             this.shadowRender[j] = canvas;
-            
+
             canvas.width = this.canvas.width;
             canvas.height = this.canvas.height;
 
@@ -2385,11 +2431,11 @@ class CanvasRenderer extends Renderer {
             ctx.lineWidth = 1;
             ctx.lineWidth = 0;
             ctx.filter = "blur(10px)";
-            
+
             ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
             ctx.shadowBlur = this.keyMovement * 3;
             ctx.shadowOffsetY = -y + this.keyMovement;
-            
+
             if (sharp) {
                 ctx.shadowOffsetX = this.keyMovement;
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
@@ -2451,7 +2497,7 @@ class CanvasRenderer extends Renderer {
             this.ctx.drawImage(this.shadowRender[j], 0, 0);
 
             let sharp = j ? true : false;
-            
+
             for (let i in this.piano.keys) {
                 if (!this.piano.keys.hasOwnProperty(i)) continue;
 
@@ -2469,7 +2515,7 @@ class CanvasRenderer extends Renderer {
                 if (key.timePlayed > timePlayedEnd) {
                     y = Math.floor(this.keyMovement - (((now - key.timePlayed) / 100) * this.keyMovement));
                 }
-                
+
                 let x = Math.floor(key.sharp ? this.blackKeyOffset + this.whiteKeyWidth * key.spatial : this.whiteKeyWidth * key.spatial);
                 let image = key.sharp ? this.blackKeyRender : this.whiteKeyRender;
                 this.ctx.drawImage(image, x, y);
@@ -2563,9 +2609,9 @@ class CanvasRenderer extends Renderer {
     }
 
     static translateMouseEvent(evt) {
-        var element = evt.target;
-        var offx = 0;
-        var offy = 0;
+        let element = evt.target;
+        let offx = 0;
+        let offy = 0;
         do {
             if (!element)
                 break;
@@ -2760,7 +2806,7 @@ class Piano {
 
         let white_spatial = 0;
         let black_spatial = 0;
-        
+
         let black_it = 0;
         let black_lut = [2, 1, 2, 1, 1];
 
@@ -2791,7 +2837,7 @@ class Piano {
         addKey("c", 7);
 
         this.renderer = new CanvasRenderer().init(this);
-        
+
         window.addEventListener('resize', () => {
             piano.renderer.resize();
         });
@@ -3143,5 +3189,226 @@ class ROMGraphics {
         this.buildTiles()
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // ==UserScript==
+// // @name         Draw
+// // @namespace    http://tampermonkey.net/
+// // @version      1.7
+// // @description  Drawing addon for mppclone
+// // @author       Hri7566
+// // @match        https://mppclone.com/*
+// // @match        https://multiplayerpiano.com/*
+// // @icon         https://www.google.com/s2/favicons?domain=mppclone.com
+// // @grant        none
+// // ==/UserScript==
+
+// // if(window.location.hostname.indexOf("cursors.me") != -1 || window.location.hostname.indexOf("yourworldofpixels.com") != -1)
+// //         window.location.href = "http://www.ourworldofpixels.com/piano";
+
+// EXT = window.EXT || {_initfunc: []};
+// window.onload = function(){
+// 	MPP = MPP || {};
+// 	MPP.addons = EXT;
+// 	for(var x = EXT._initfunc.length; x--;)
+// 		EXT._initfunc[x]();
+// 	EXT.__proto__ = null;
+// };
+
+// /* By ming, v3 */
+// EXT = window.EXT || {_initfunc: []};
+// EXT._initfunc.push(function(){
+// 	var addon = EXT.draw = {__proto__: null};
+// 	addon.lineLife = 25;
+// 	var p = document.createElement("canvas");
+// 	p.id = "drawboard";
+// 	p.style = "position: absolute; top: 0; left: 0; z-index: 400; pointer-events: none;";
+// 	p.width = window.innerWidth;
+// 	p.height = window.innerHeight;
+// 	document.body.appendChild(p);
+// 	var dbctx = p.getContext("2d");
+// 	var shifted = false;
+// 	var clicking = false;
+// 	$(document).on('mousedown', (e)=>{ if(e.shiftKey){ clicking = true; draw(); e.preventDefault(); }});
+// 	$(document).on('mouseup', (e)=>{ clicking = false; });
+// 	$(document).on('keyup keydown', (e)=>{ shifted = e.shiftKey; });
+
+// 	addon.enabled = true;
+// 	addon.customColor = null;
+// 	addon.ctx = dbctx;
+// 	addon.onrefresh = [];
+// 	addon.brushSize = 2;
+// 	addon.mutes = [];
+// 	addon.lines = [];
+// 	addon.buf = [{n: "ldraw", v: 0}];
+// 	function resize(){
+// 		p.width = window.innerWidth;
+// 		p.height = window.innerHeight;
+// 	}
+// 	window.addEventListener('resize', resize, false);
+// 	addon.flushloop = setInterval(()=>{
+// 		var t = Date.now();
+// 		if(addon.buf.length != 1){
+// 			if(addon.buf.length>1)
+// 				MPP.client.sendArray([{m: "custom", data: {m: 'draw', t: t, n: addon.buf}, target: { mode: 'subscribed' } }]);
+// 			addon.buf = [{n: "ldraw", v: 0}];
+// 		}
+// 	}, 1000/60/16);
+// 	addon.onrefresh.push(function(t){
+// 		if(addon.lines.length){
+//                         dbctx.clearRect(0,0,window.innerWidth, window.innerHeight);
+//                         for(var l = 0; l<addon.lines.length;l++){
+//                         dbctx.globalAlpha = 1;
+//                         var c=addon.lines[l];
+//                         dbctx.strokeStyle = c[6];
+//                         dbctx.lineWidth = c[5];
+//                         var d = addon.lineLife - (t - c[4]) / 1000;
+//                         if(d <= 0){
+//                                 addon.lines.splice(l--, 1);
+//                                 continue;
+//                         }
+//                         dbctx.globalAlpha = 0.3 * d;
+//                         dbctx.beginPath();
+//                         dbctx.moveTo(c[0], c[1]);
+//                         dbctx.lineTo(c[2], c[3]);
+//                         dbctx.stroke();
+// 	        	}
+// 		}
+// 	});
+// 	function redraw(){
+// 		if(addon.enabled){
+// 			var t = Date.now();
+// 			for(var x = 0; x < addon.onrefresh.length; x++){
+// 				addon.onrefresh[x](t);
+// 			}
+// 		}
+// 		/*window.requestAnimationFrame(redraw);*/
+// 	}
+// 	/*window.requestAnimationFrame(redraw);*/
+// 	setInterval(redraw, 1000/60/16);
+// 	/* https://stackoverflow.com/a/8639991 */
+// 	function stringToBytesFaster(str) {
+// 		var ch, st, re = [], j=0;
+// 		for (var i = 0; i < str.length; i++ ) {
+// 			ch = str.charCodeAt(i);
+// 			if(ch < 127){
+// 			re[j++] = ch & 0xFF;
+// 			} else {
+// 			st = [];
+// 			do {
+// 				st.push(ch & 0xFF);
+// 				ch = ch >> 8;
+// 			} while (ch);
+// 			st = st.reverse();
+// 			for(var k=0;k<st.length; ++k)
+// 				re[j++] = st[k];
+// 			}
+// 		}
+// 		return re;
+// 	}
+// 	function parseLine(str, color, size){
+// 		var vector = [0, 0, 0, 0, Date.now(), 1, color];
+// 		var bytes = stringToBytesFaster(str);
+// 		vector[0] = Math.round(((100 / 255) * bytes[0]/100) * window.innerWidth);
+// 		vector[1] = Math.round(((100 / 255) * bytes[1]/100) * window.innerHeight);
+// 		vector[2] = Math.round(((100 / 255) * bytes[2]/100) * window.innerWidth);
+// 		vector[3] = Math.round(((100 / 255) * bytes[3]/100) * window.innerHeight);
+// 		vector[5] = size;
+// 		addon.lines.push(vector);
+// 	}
+// 	function draw(){
+// 		// var u = MPP.client.getOwnParticipant();
+//         let ux = Math.max(Math.min(100, MPP.Bot.cursor.pos.x), 0);
+//         let uy = Math.max(Math.min(100, MPP.Bot.cursor.pos.y), 0);
+// 		var lastpos = [ux, uy];
+// 		var b = new ArrayBuffer(4);
+// 		var dv = new DataView(b);
+// 		dv.setUint8(0, Math.round(ux/100 * 255));
+// 		dv.setUint8(1, Math.round(uy/100 * 255));
+// 		function poll(){
+// 			if(lastpos[0] != ux || lastpos[1] != uy){
+// 				uy = Math.max(Math.min(100,uy), 0);
+// 				ux = Math.max(Math.min(100,ux), 0);
+// 				dv.setUint8(2, Math.round(ux/100 * 255));
+// 				dv.setUint8(3, Math.round(uy/100 * 255));
+// 				var s = String.fromCharCode.apply(null, new Uint8Array(b));
+// 				var clr = addon.customColor || MPP.client.getOwnParticipant().color;
+// 				addon.buf.push({n: s, v: Math.min(addon.brushSize, 5), d: parseInt(clr.slice(1), 16)});
+// 				dv.setUint8(0, Math.round(ux/100 * 255));
+// 				dv.setUint8(1, Math.round(uy/100 * 255));
+// 				lastpos = [ux, uy];
+// 				parseLine(s, clr, Math.min(addon.brushSize, 5));
+// 			}
+// 			if(clicking)
+// 				setTimeout(poll, 25);
+// 		}
+// 		setTimeout(poll, 25);
+// 	}
+
+// 	addon.mkline = function(x, y, x2, y2, s, color){
+// 		if(x<0||y<0||x2<0||y2<0||x>255||y>255||x2>255||y2>255)return;
+// 		var b = new ArrayBuffer(4);
+// 		var dv = new DataView(b);
+// 		dv.setUint8(0, x);
+// 		dv.setUint8(1, y);
+// 		dv.setUint8(2, x2);
+// 		dv.setUint8(3, y2);
+// 		var str = String.fromCharCode.apply(null, new Uint8Array(b));
+// 		var clr = color || addon.customColor || MPP.client.getOwnParticipant().color;
+// 		addon.buf.push({n: str, v: Math.min(s||1, 5), d: parseInt(clr.slice(1), 16)});
+// 		parseLine(str, clr, Math.min(s||1, 5));
+// 	}
+// 	addon.tohtml = function(c) {
+// 		c = c.toString(16);
+// 		return '#' + ('000000' + c).substring(c.length);
+// 	};
+// 	MPP.client.on('custom', (msg) => {
+//         if (msg.data.m !== 'draw') return;
+// 		if(msg.data.n[0].n == "ldraw" && addon.mutes.indexOf(MPP.client.findParticipantById(msg.data.p)._id) === -1){
+// 			msg.data.n.reduce(function(a, b){
+// 				if(b.n.length == 4){
+// 					var clr = (b.d !== undefined && addon.tohtml(b.d)) || MPP.client.findParticipantById(msg.data.p).color;
+// 					parseLine(b.n, clr, Math.min(b.v,5));
+// 				}
+// 			});
+// 		}
+// 	});
+// 	MPP.client.on('c', ()=>{
+// 		addon.lines = [[0,0,0,0,0,0,"#0"]];
+// 	});
+
+//     MPP.client.on('hi', () => {
+//         if (!MPP.client.customSubscribed) {
+//             MPP.client.sendArray([{m:"+custom"}]);
+//             MPP.client.customSubscribed = true;
+//         }
+//     });
+// });
+
+
+
+
+// // button
+
+// $("#bottom .relative").append(`<div id="clear-btn" class="ugly-button translate">Clear Drawings</div>`);
+// $("#clear-btn").css({position: "absolute", left: "900px", top: "4px"}).on("click", () => {
+//     MPP.addons.draw.lines = [[0,0,0,0,0,0,"#0"]];
+// });
+
+
+
+
 
 
